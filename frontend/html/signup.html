@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up - E-Commerce</title>
+  <link rel="stylesheet" href="/frontend/css/style.css">
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-header">
+      <h1>🛍️ Create Account</h1>
+      <p>Join us and start shopping!</p>
+    </div>
+
+    <div id="errorMessage" class="error-message"></div>
+    <div id="successMessage" class="success-message"></div>
+
+    <form id="signupForm">
+      <div class="form-group">
+        <label for="fullName">Full Name</label>
+        <input 
+          type="text" 
+          id="fullName" 
+          name="fullName" 
+          placeholder="John Doe"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input 
+          type="email" 
+          id="email" 
+          name="email" 
+          placeholder="john@example.com"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input 
+          type="password" 
+          id="password" 
+          name="password" 
+          placeholder="Min. 6 characters"
+          required
+          minlength="6"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword">Confirm Password</label>
+        <input 
+          type="password" 
+          id="confirmPassword" 
+          name="confirmPassword" 
+          placeholder="Re-enter password"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="role">Account Type</label>
+        <select id="role" name="role" required>
+          <option value="customer">Customer</option>
+          <option value="vendor">Vendor</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn" id="submitBtn">
+        Create Account
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      Already have an account? <a href="login.html">Login here</a>
+    </div>
+  </div>
+
+  <script src="/frontend/js/config.js"></script>
+  <script src="/frontend/js/auth.js"></script>
+  <script src="/frontend/js/signup.js"></script>
+</body>
+</html>
