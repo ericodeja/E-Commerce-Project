@@ -4,23 +4,19 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/auth.js";
 import path from "path";
 import { fileURLToPath } from "url";
+import errorHandler from "./middleware/error.js";
 
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
 const app = express();
 
-//Middleware
 app.use(cors());
 app.use(express.json());
-
-//Serve static files(frontened)
-app.use(express.static(path.join(__dirname, "../frontend")));
-
 app.use("/api/auth", authRoutes);
+app.use(errorHandler);
 
 app.get("/", (req, res) => {
   res.json({ message: "E-commerce API is running" });
