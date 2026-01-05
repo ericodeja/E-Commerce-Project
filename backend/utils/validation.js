@@ -60,13 +60,6 @@ async function createToken(newUser) {
   return { accessToken, refreshToken };
 }
 
-async function verifyToken(refreshToken) {
-  try {
-    const payload = jwt.verify(refreshToken, process.env.SECRET_KEY);
-    return payload
-  } catch (err) {
-    throw new Error(err)
-  }
-}
 
-export { hashPassword, validatePassword, createToken, verifyToken };
+
+export { hashPassword, validatePassword, createToken};

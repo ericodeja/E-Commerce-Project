@@ -5,14 +5,14 @@ const errorHandler = (error, req, res, next) => {
         message: error.message,
       },
     });
+  } else {
+    res.status(500).json({
+      error: {
+        message:
+          error.message || "An error occurred. Please view logs for more details",
+      },
+    });
   }
-
-  res.status(500).json({
-    error: {
-      message:
-        error.message || "An error occurred. Please view logs for more details",
-    },
-  });
 };
 
 export default errorHandler;

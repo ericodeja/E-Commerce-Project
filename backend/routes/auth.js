@@ -4,11 +4,12 @@ import {
   hashPassword,
   validatePassword,
   createToken,
-  verifyToken,
 } from "../utils/validation.js";
+import protect from "../middleware/auth.js";
 import { readFile, writeFile } from "../utils/fileServices.js";
 import { fileURLToPath } from "url";
 import path from "path";
+import jwt from "jsonwebtoken";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -125,31 +126,44 @@ router.post("/login", async (req, res, next) => {
   }
 });
 
-router.post('/logout', async(req, res, next) =>{
-  
-})
+router.post("/logout", protect, async (req, res, next) => {
+  try {
+    let allTokens = await readFile(TOKENS_FILE);
+    const payload = req.user;
+
+    allTokens = allTokens.filter((token) => token.userId !== payload.userId);
+    await writeFile(TOKENS_FILE, allTokens);
+  } catch (err) {
+    next(err);
+  }
+});
 
 router.post("/refresh", async (req, res, next) => {
   try {
     const allUsers = await readFile(USERS_FILE);
     const allTokens = await readFile(TOKENS_FILE);
-    const { oldRefreshToken } = req.body;
-    const payload = await verifyToken(oldRefreshToken);
+    const oldRefreshToken = req.body.refreshToken;
 
     //Validations
+    //Token
+
+    const payload = jwt.verify(oldRefreshToken, process.env.SECRET_KEY);
     const existingToken = allTokens.find(
       (token) => token.userId === payload.userId
     );
+
+    // Check if oldrefreshtoken and token in database match
     if (oldRefreshToken !== existingToken.token) {
-      const error = new Error("Invalid token");
+      const error = new Error("Invalid Token");
       error.status = 401;
-      throw next(error);
+      return next(error);
     }
 
+    //Check if oldrefreshtoken is linked to any user
     const existingUser = allUsers.find((u) => u.id === payload.userId);
     if (!existingUser) {
-      const error = new Error("User not found");
-      error.status = 404;
+      const error = new Error("Invalid Token");
+      error.status = 401;
       return next(error);
     }
 
@@ -164,11 +178,8 @@ router.post("/refresh", async (req, res, next) => {
       },
     });
   } catch (err) {
-    const error = new Error(err);
-    return next(error);
+    next(err);
   }
 });
-
-
 
 export default router;
