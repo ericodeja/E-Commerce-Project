@@ -1,15 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { readFile, writeFile } from "../utils/fileServices.js";
-import Token from "../schemas/token.js";
-import { fileURLToPath } from "url";
-import path from "path";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const DATA_DIR = path.join(__dirname, "../data");
-const TOKENS_FILE = path.join(DATA_DIR, "tokens.json");
+import Token from "../models/token.model.js";
 
 async function hashPassword(plainpassword) {
   const hashedPassword = await bcrypt.hash(plainpassword, 10);
@@ -17,16 +8,15 @@ async function hashPassword(plainpassword) {
 }
 
 async function validatePassword(userInputPassword, storedHashedPassword) {
-  const isMatch = await bcrypt.compare(userInputPassword, storedHashedPassword);
-  return isMatch;
+  return await bcrypt.compare(userInputPassword, storedHashedPassword);
 }
 
-async function createToken(newUser) {
+async function createToken(user) {
   //Access Token
   const accessToken = jwt.sign(
     {
-      userId: newUser.id,
-      role: newUser.role,
+      _id: user._id,
+      role: user.role,
     },
     process.env.SECRET_KEY,
     { expiresIn: "5m" }
@@ -34,32 +24,23 @@ async function createToken(newUser) {
   //Refresh Token
   const refreshToken = jwt.sign(
     {
-      userId: newUser.id,
-      role: newUser.role,
+      _id: user._id,
+      role: user.role,
     },
     process.env.SECRET_KEY,
     { expiresIn: "7d" }
   );
 
-  let allTokens = await readFile(TOKENS_FILE);
+  const token = new Token({
+    userId: user._id,
+    token: refreshToken,
+  });
 
   // Remove User existing refresh Token
-  const existingToken = allTokens.find((token) => token.userId === newUser.id);
-  allTokens = allTokens.filter((token) => token !== existingToken);
+  await Token.deleteMany({ userId: user._id });
 
-  //Get token id
-  let newId = 1;
-  if (allTokens.length > 0) {
-    newId = allTokens[allTokens.length - 1].id + 1;
-  }
-
-  const newToken = new Token(newId, newUser.id, refreshToken);
-  allTokens.push(newToken);
-  await writeFile(TOKENS_FILE, allTokens);
-
+  await token.save();
   return { accessToken, refreshToken };
 }
 
-
-
-export { hashPassword, validatePassword, createToken};
+export { hashPassword, validatePassword, createToken };

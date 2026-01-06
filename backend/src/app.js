@@ -1,14 +1,12 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import authRoutes from "./routes/auth.js";
-import userRoutes from "./routes/user.js";
+import authRoutes from "../routes/auth.js";
+import userRoutes from "../routes/user.js";
 import path from "path";
 import { fileURLToPath } from "url";
-import errorHandler from "./middleware/error.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import errorHandler from "../middleware/error.js";
+import startServer from "./server.js";
 
 dotenv.config();
 
@@ -16,6 +14,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 //Routes
 app.use("/api/auth", authRoutes);
@@ -29,6 +28,7 @@ app.get("/", (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+
+startServer(app, PORT);
+
+export default app;

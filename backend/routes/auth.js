@@ -1,5 +1,4 @@
 import express from "express";
-import User from "../schemas/user.js";
 import {
   hashPassword,
   validatePassword,
@@ -7,16 +6,9 @@ import {
 } from "../utils/validation.js";
 import protect from "../middleware/auth.js";
 import { readFile, writeFile } from "../utils/fileServices.js";
-import { fileURLToPath } from "url";
-import path from "path";
 import jwt from "jsonwebtoken";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const DATA_DIR = path.join(__dirname, "../data");
-const USERS_FILE = path.join(DATA_DIR, "users.json");
-const TOKENS_FILE = path.join(DATA_DIR, "tokens.json");
+import User from "../models/user.model.js";
+import Token from "../models/token.model.js";
 
 const router = express.Router();
 
@@ -36,15 +28,6 @@ router.post("/signup", async (req, res, next) => {
       return next(error);
     }
 
-    //Email already exists?
-    const allUsers = await readFile(USERS_FILE);
-    const existingUser = allUsers.find((user) => user.email === email);
-    if (existingUser) {
-      const error = new Error("Conflict: Email already exists");
-      error.status = 409;
-      return next(error);
-    }
-
     // Password too short
     if (password.length < 6) {
       const error = new Error("Password must be at least 6 characters");
@@ -52,28 +35,35 @@ router.post("/signup", async (req, res, next) => {
       return next(error);
     }
 
-    // Get Id
-    let newId = 1;
-    if (allUsers.length > 0) {
-      newId = allUsers[allUsers.length - 1].id + 1;
-    }
+    const passwordHash = await hashPassword(password);
+    const user = new User({
+      fullName,
+      email,
+      passwordHash,
+      role: role,
+      status: "active",
+      isEmailVerified: false,
+      failedLoginAttempts: 0,
+      preferences: {
+        receiveEmails: false,
+        receiveSMS: true,
+        language: "en",
+        currency: "NGN",
+      },
+    });
 
-    const hashedPassword = await hashPassword(password);
-    const newUser = new User(newId, fullName, email, hashedPassword, role);
+    await user.save();
 
-    const { accessToken, refreshToken } = await createToken(newUser);
-    allUsers.push(newUser);
-    await writeFile(USERS_FILE, allUsers);
+    const { accessToken, refreshToken } = await createToken(user);
 
     // Response
     return res.status(201).json({
       success: true,
       message: "User created successfully",
       data: {
-        userId: newUser.id,
-        email: newUser.email,
-        fullName: newUser.fullname,
-        role: newUser.role,
+        _id: user._id,
+        fullName: user.fullName,
+        role: user.role,
         accessToken,
         refreshToken,
       },
@@ -87,7 +77,6 @@ router.post("/signup", async (req, res, next) => {
 router.post("/login", async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const allUsers = await readFile(USERS_FILE);
 
     //Validation
     if (!email) {
@@ -96,26 +85,23 @@ router.post("/login", async (req, res, next) => {
       return next(error);
     }
 
-    const existingUser = allUsers.find((u) => u.email === email);
+    const user = await User.findOne({ email: email });
 
-    if (
-      !existingUser ||
-      !(await validatePassword(password, existingUser.password))
-    ) {
+    if (!user || !(await validatePassword(password, user.passwordHash))) {
       const error = new Error("Login error: Invalid Credentials");
       error.status = 401;
       return next(error);
     }
 
-    const { accessToken, refreshToken } = await createToken(existingUser);
+    const { accessToken, refreshToken } = await createToken(user);
 
-    return res.status(201).json({
+    return res.status(200).json({
       success: true,
       message: "Login successful",
       data: {
-        userId: existingUser.id,
-        fullName: existingUser.fullname,
-        role: existingUser.role,
+        _id: user._id,
+        fullName: user.fullName,
+        role: user.role,
         accessToken,
         refreshToken,
       },
@@ -128,11 +114,9 @@ router.post("/login", async (req, res, next) => {
 
 router.post("/logout", protect, async (req, res, next) => {
   try {
-    let allTokens = await readFile(TOKENS_FILE);
     const payload = req.user;
-
-    allTokens = allTokens.filter((token) => token.userId !== payload.userId);
-    await writeFile(TOKENS_FILE, allTokens);
+    await Token.deleteOne({ userId: payload._id });
+    res.status(200).json('Delete Successful');
   } catch (err) {
     next(err);
   }
@@ -140,17 +124,12 @@ router.post("/logout", protect, async (req, res, next) => {
 
 router.post("/refresh", async (req, res, next) => {
   try {
-    const allUsers = await readFile(USERS_FILE);
-    const allTokens = await readFile(TOKENS_FILE);
     const oldRefreshToken = req.body.refreshToken;
 
     //Validations
     //Token
-
     const payload = jwt.verify(oldRefreshToken, process.env.SECRET_KEY);
-    const existingToken = allTokens.find(
-      (token) => token.userId === payload.userId
-    );
+    const existingToken = await Token.findOne({userId: payload._id})
 
     // Check if oldrefreshtoken and token in database match
     if (oldRefreshToken !== existingToken.token) {
@@ -160,7 +139,7 @@ router.post("/refresh", async (req, res, next) => {
     }
 
     //Check if oldrefreshtoken is linked to any user
-    const existingUser = allUsers.find((u) => u.id === payload.userId);
+    const existingUser = await User.findOne({_id: payload._id})
     if (!existingUser) {
       const error = new Error("Invalid Token");
       error.status = 401;
