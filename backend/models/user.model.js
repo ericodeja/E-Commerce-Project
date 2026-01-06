@@ -13,23 +13,26 @@ const UserSchema = new mongoose.Schema(
       required: true,
     },
 
-    passwordHash: { type: String, required: true },
+    passwordHash: { type: String, required: true, select: false },
     isEmailVerified: Boolean,
     role: { type: String, enum: ["customer", "admin"] },
     scopes: [String],
     status: { type: String, enum: ["active", "suspended", "disabled"] },
 
-    addresses: [
-      {
-        label: String,
-        street: String,
-        city: String,
-        state: String,
-        country: String,
-        postalCode: String,
-        isDefault: Boolean,
-      },
-    ],
+    addresses: {
+      type: [
+        {
+          label: String,
+          street: String,
+          city: String,
+          state: String,
+          country: String,
+          postalCode: String,
+          isDefault: Boolean,
+        },
+      ],
+      select: false,
+    },
 
     cart: [
       {
@@ -41,14 +44,17 @@ const UserSchema = new mongoose.Schema(
 
     wishlist: [{ type: Schema.Types.ObjectId }],
     orderIds: [{ type: Schema.Types.ObjectId }],
-    paymentMethods: [
-      {
-        provider: String,
-        tokenId: String,
-        last4: String,
-        expiry: String,
-      },
-    ],
+    paymentMethods: {
+      type: [
+        {
+          provider: String,
+          tokenId: String,
+          last4: String,
+          expiry: String,
+        },
+      ],
+      select: false,
+    },
 
     preferences: {
       receiveEmails: Boolean,
@@ -57,10 +63,10 @@ const UserSchema = new mongoose.Schema(
       currency: String,
     },
 
-    lastLogin: Date,
-    failedLoginAttempts: Number,
-    passwordResetToken: String,
-    passwordResetExpires: Date,
+    lastLogin: { type: Date, select: false },
+    failedLoginAttempts: { type: Number, select: false },
+    passwordResetToken: { type: String, select: false },
+    passwordResetExpires: { type: Date, select: false },
   },
   {
     timestamps: true,

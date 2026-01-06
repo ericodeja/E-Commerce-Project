@@ -15,7 +15,7 @@ async function createToken(user) {
   //Access Token
   const accessToken = jwt.sign(
     {
-      _id: user._id,
+      _id: user._id.toString(),
       role: user.role,
     },
     process.env.SECRET_KEY,
@@ -24,7 +24,7 @@ async function createToken(user) {
   //Refresh Token
   const refreshToken = jwt.sign(
     {
-      _id: user._id,
+      _id: user._id.toString(),
       role: user.role,
     },
     process.env.SECRET_KEY,
