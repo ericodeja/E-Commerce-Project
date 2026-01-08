@@ -3,6 +3,7 @@ import cors from "cors";
 import "dotenv/config";
 import authRoutes from "../routes/auth.js";
 import userRoutes from "../routes/user.js";
+import productRoutes from '../routes/product.js'
 import errorHandler from "../middleware/error.js";
 import startServer from "./server.js";
 
@@ -16,6 +17,7 @@ app.use(express.urlencoded({ extended: false }));
 //Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/product", productRoutes);
 
 //Error Handler
 app.use(errorHandler);

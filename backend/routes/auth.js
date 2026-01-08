@@ -17,4 +17,6 @@ router.post("/logout", protect, authControllers.logout);
 
 router.post("/refresh", authControllers.refresh);
 
+router.get("/me", authControllers.getCurrentUser);
+
 export default router;

@@ -30,7 +30,7 @@ const signup = async (req, res, next) => {
       fullName,
       email,
       passwordHash,
-      role: role,
+      role,
       status: "active",
       isEmailVerified: false,
       failedLoginAttempts: 0,
@@ -151,4 +151,22 @@ const refresh = async (req, res, next) => {
   }
 };
 
-export default { signup, login, logout, refresh };
+const getCurrentUser = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      const error = new Error("User not found");
+      error.status = 404;
+      return next(error);
+    }
+    return res.status(200).json({
+      success: true,
+      data: { user },
+    });
+  } catch (err) {
+    const error = new Error(`Error: ${err}`);
+    return next(error);
+  }
+};
+
+export default { signup, login, logout, refresh , getCurrentUser};

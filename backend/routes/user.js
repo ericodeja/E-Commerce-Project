@@ -7,7 +7,6 @@ const router = express.Router();
 //Middleware
 router.use(protect);
 
-router.get("/me", userControllers.getCurrentUser);
 router.get("/users", userControllers.getUser);
 router.get("/:id", userControllers.getUser);
 export default router;
