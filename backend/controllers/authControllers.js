@@ -2,10 +2,13 @@ import {
   hashPassword,
   validatePassword,
   createToken,
+  createResetToken,
 } from "../utils/validation.js";
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
 import Token from "../models/token.model.js";
+import passwordResetEmail from "../utils/email.js";
+import crypto from "crypto";
 
 const signup = async (req, res, next) => {
   try {
@@ -105,7 +108,10 @@ const login = async (req, res, next) => {
 const logout = async (req, res, next) => {
   try {
     const payload = req.user;
-    await Token.deleteOne({ userId: payload._id });
+    await Token.findOneAndUpdate(
+      { userId: payload._id },
+      { refreshToken: undefined }
+    );
     res.status(200).json("Delete Successful");
   } catch (err) {
     next(err);
@@ -119,10 +125,12 @@ const refresh = async (req, res, next) => {
     //Validations
     //Token
     const payload = jwt.verify(oldRefreshToken, process.env.SECRET_KEY);
-    const existingToken = await Token.findOne({ userId: payload._id });
+    const existingToken = await Token.findOne({ userId: payload._id }).select(
+      "+refreshToken"
+    );
 
     // Check if oldrefreshtoken and token in database match
-    if (oldRefreshToken !== existingToken.token) {
+    if (oldRefreshToken !== existingToken.refreshToken) {
       const error = new Error("Invalid Token");
       error.status = 401;
       return next(error);
@@ -151,7 +159,61 @@ const refresh = async (req, res, next) => {
   }
 };
 
-const getCurrentUser = async (req, res, next) => {
+const forgotPassword = async (req, res, next) => {
+  try {
+    const user = await User.findOne({ email: req.body.email });
+    const resetToken = await createResetToken(user);
+    await passwordResetEmail(resetToken);
+    res.status(200).json("Email sent");
+  } catch (err) {
+    const error = new Error(`Reset error: ${err}`);
+    next(error);
+  }
+};
+
+const resetPassword = async (req, res, next) => {
+  try {
+    const incomingHashedToken = crypto
+      .createHash("sha256")
+      .update(req.body.resetToken)
+      .digest("hex");
+
+    const user = await User.findOne({ email: req.body.email }).select(
+      "+passwordHash"
+    );
+    const matchingToken = await Token.findOne({ userId: user._id }).select(
+      "+passwordResetToken +passwordResetExpires"
+    );
+
+    if (incomingHashedToken !== matchingToken.passwordResetToken) {
+      const error = new Error("Invalid or expired token");
+      return next(error);
+    }
+
+    if (matchingToken.passwordResetExpires < Date.now()) {
+      const error = new Error("Invalid or expired token");
+      return next(error);
+    }
+
+    const newPasswordHash = await hashPassword(req.body.newPassword);
+    await user.updateOne({ passwordHash: newPasswordHash });
+    await user.save();
+
+    await matchingToken.updateOne({ passwordResetToken: "" });
+    await matchingToken.updateOne({ passwordResetExpires: 0 });
+    await matchingToken.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Successful",
+    });
+  } catch (err) {
+    const error = new Error(`Reset Error: ${err}`);
+    next(error);
+  }
+};
+
+const getUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
     if (!user) {
@@ -169,4 +231,29 @@ const getCurrentUser = async (req, res, next) => {
   }
 };
 
-export default { signup, login, logout, refresh , getCurrentUser};
+const updateUser = async (req, res, next) => {
+  try {
+    const filter = { _id: req.user._id };
+    const update = req.body;
+
+    const result = await User.findOneAndUpdate(filter, update, { new: true });
+    return res.status(200).json({
+      success: true,
+      data: { result },
+    });
+  } catch (err) {
+    const error = new Error(`Update Error: ${err}`);
+    next(error);
+  }
+};
+
+export default {
+  signup,
+  login,
+  logout,
+  refresh,
+  getUser,
+  updateUser,
+  forgotPassword,
+  resetPassword,
+};

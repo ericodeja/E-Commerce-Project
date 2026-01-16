@@ -9,15 +9,15 @@ function protect(req, res, next) {
       return next(error);
     }
 
-    const token = authHeader.split(" ")[1];
+    const refreshToken = authHeader.split(" ")[1];
 
-    if (!token) {
+    if (!refreshToken) {
       const error = new Error("Access Denied");
       error.status = 401;
       return next(error);
     }
 
-    const decoded = jwt.verify(token, process.env.SECRET_KEY);
+    const decoded = jwt.verify(refreshToken, process.env.SECRET_KEY);
     req.user = decoded;
     next();
   } catch (err) {

@@ -1,15 +1,24 @@
 import mongoose from "mongoose";
-import { Schema} from "mongoose";
+import { Schema } from "mongoose";
 
 const TokenSchema = new mongoose.Schema(
   {
     userId: {
       type: Schema.Types.ObjectId,
+      unique: true,
       required: true,
     },
-    token: {
+    refreshToken: {
       type: String,
-      required: true,
+      select: false
+    },
+    passwordResetToken: {
+      type: String,
+      select: false,
+    },
+    passwordResetExpires: {
+      type: Number,
+      select: false
     },
   },
   {
