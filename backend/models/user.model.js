@@ -11,12 +11,13 @@ const UserSchema = new mongoose.Schema(
       type: String,
       unique: true,
       required: true,
-      select: false
+      select: false,
     },
 
     passwordHash: { type: String, required: true, select: false },
     isEmailVerified: Boolean,
-    role: { type: String, enum: ["customer", "admin"] },
+    role: { type: String, enum: ["user", "admin"] },
+    permissions: { type: [String], select: false },
     scopes: [String],
     status: { type: String, enum: ["active", "suspended", "disabled"] },
 
@@ -71,7 +72,7 @@ const UserSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 const User = mongoose.model("User", UserSchema);

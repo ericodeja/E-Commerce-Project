@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
+import User from "../models/user.model.js";
 
-function protect(req, res, next) {
+function authenticate(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -24,5 +25,33 @@ function protect(req, res, next) {
     next(err);
   }
 }
+const authorizePermissions = (...requiredPermission) => {
+  return async (req, res, next) => {
+    try {
+      const user = await User.findOne({ _id: req.user._id }).select(
+        "+permissions",
+      );
+      if (!user) {
+        const error = new Error("Authorization Error : User Not Found");
+        error.status = 404;
+        return next(error);
+      }
 
-export default protect;
+      if (
+        !requiredPermission.every((permission) => {
+          return user.permissions.includes(permission);
+        })
+      ) {
+        const error = new Error("Authorization Error : Forbidden");
+        error.status = 403;
+        return next(error);
+      }
+      next();
+    } catch (err) {
+      const error = new Error(`Authorization Error : ${err}`);
+      next(error);
+    }
+  };
+};
+
+export { authenticate, authorizePermissions };

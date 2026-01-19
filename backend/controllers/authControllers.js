@@ -9,6 +9,7 @@ import User from "../models/user.model.js";
 import Token from "../models/token.model.js";
 import passwordResetEmail from "../utils/email.js";
 import crypto from "crypto";
+import { roles, rolePermissionsMap } from "../utils/rolePermissions.js";
 
 const signup = async (req, res, next) => {
   try {
@@ -28,12 +29,20 @@ const signup = async (req, res, next) => {
       return next(error);
     }
 
+    if (!roles.includes(role)) {
+      const error = new Error("Invalid Role");
+      error.status = 400;
+      return next(error);
+    }
+
     const passwordHash = await hashPassword(password);
+
     const user = new User({
       fullName,
       email,
       passwordHash,
       role,
+      permissions: rolePermissionsMap[role],
       status: "active",
       isEmailVerified: false,
       failedLoginAttempts: 0,
@@ -110,7 +119,7 @@ const logout = async (req, res, next) => {
     const payload = req.user;
     await Token.findOneAndUpdate(
       { userId: payload._id },
-      { refreshToken: undefined }
+      { refreshToken: undefined },
     );
     res.status(200).json("Delete Successful");
   } catch (err) {
@@ -126,7 +135,7 @@ const refresh = async (req, res, next) => {
     //Token
     const payload = jwt.verify(oldRefreshToken, process.env.SECRET_KEY);
     const existingToken = await Token.findOne({ userId: payload._id }).select(
-      "+refreshToken"
+      "+refreshToken",
     );
 
     // Check if oldrefreshtoken and token in database match
@@ -179,10 +188,10 @@ const resetPassword = async (req, res, next) => {
       .digest("hex");
 
     const user = await User.findOne({ email: req.body.email }).select(
-      "+passwordHash"
+      "+passwordHash",
     );
     const matchingToken = await Token.findOne({ userId: user._id }).select(
-      "+passwordResetToken +passwordResetExpires"
+      "+passwordResetToken +passwordResetExpires",
     );
 
     if (incomingHashedToken !== matchingToken.passwordResetToken) {

@@ -1,12 +1,21 @@
 import express from "express";
-import protect from "../middleware/auth.js";
+import { authenticate } from "../middleware/auth.js";
 import userControllers from "../controllers/userControllers.js";
+import { authorizePermissions } from "../middleware/auth.js";
 
 const router = express.Router();
 
-//Middleware
-router.use(protect);
 
-router.get("/users", userControllers.getUser);
-router.get("/:id", userControllers.getUser);
+router.get(
+  "/users",
+  authenticate,
+  authorizePermissions("user:read_all"),
+  userControllers.getUser,
+);
+router.get(
+  "/:id",
+  authenticate,
+  authorizePermissions("user:read_one"),
+  userControllers.getUser,
+);
 export default router;
