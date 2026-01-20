@@ -2,9 +2,31 @@ import Product from "../models/product.model.js";
 
 const createProduct = async (req, res, next) => {
   try {
-    const { name, price, quantity, description, type, tags } = req.body;
-
-    const product = new Product({name , price, quantity, description, type, tags});
+    const product = new Product({
+      name: req.body.name,
+      description: {
+        fullDesription: req.body.fullDescription,
+        shortDescription: req.body.shortDescription,
+      },
+      pricing: {
+        price: req.body.price,
+        salePrice: req.body.salePrice,
+        currency: req.body.currency,
+        costPrice: req.body.costPrice,
+      },
+      stock: {
+        quantity: req.body.quantity,
+      },
+      media: {
+        images: req.images,
+        thumbnail: req.thumbnail,
+      },
+      category: {
+        category: req.body.category,
+        subCategories: [req.body.subCategories],
+        tags: req.body.tags,
+      },
+    });
     await product.save();
 
     return res.status(200).json({

@@ -8,9 +8,14 @@ const rolePermissions = {
     "user:delete_any",
     "user:ban",
     "user:unban",
+    "product:update",
+    "product:create",
+    "product:delete",
+    "product:publish",
+    "product:unpublish",
+    "product:read",
   ],
   user: [
-    "auth:login",
     "auth:logout",
     "auth:refresh",
     "auth:reset_password",
@@ -19,6 +24,8 @@ const rolePermissions = {
     "user:read_self",
     "user:update_self",
     "user:delete_self",
+
+    "product:search",
   ],
 };
 

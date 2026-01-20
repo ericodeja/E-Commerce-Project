@@ -1,5 +1,5 @@
 import express from "express";
-import { authenticate } from "../middleware/auth.js";
+import { authenticate, authorizePermissions } from "../middleware/auth.js";
 import authControllers from "../controllers/authControllers.js";
 
 const router = express.Router();
@@ -13,7 +13,12 @@ router.post("/signup", authControllers.signup);
 
 router.post("/login", authControllers.login);
 
-router.post("/logout", authenticate, authControllers.logout);
+router.post(
+  "/logout",
+  authenticate,
+  authorizePermissions("auth:logout"),
+  authControllers.logout,
+);
 
 router.post("/refresh", authControllers.refresh);
 
@@ -21,8 +26,18 @@ router.post("/forgot-password", authControllers.forgotPassword);
 
 router.post("/reset-password", authControllers.resetPassword);
 
-router.get("/me", authControllers.getUser);
+router.get(
+  "/me",
+  authenticate,
+  authorizePermissions("user:read_self"),
+  authControllers.getUser,
+);
 
-router.put("/me", authenticate, authControllers.updateUser);
+router.put(
+  "/me",
+  authenticate,
+  authorizePermissions("user:update_self"),
+  authControllers.updateUser,
+);
 
 export default router;
