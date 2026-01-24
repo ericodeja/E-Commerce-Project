@@ -42,16 +42,7 @@ const signup = async (req, res, next) => {
       email,
       passwordHash,
       role,
-      permissions: rolePermissionsMap[role],
-      status: "active",
-      isEmailVerified: false,
-      failedLoginAttempts: 0,
-      preferences: {
-        receiveEmails: false,
-        receiveSMS: true,
-        language: "en",
-        currency: "NGN",
-      },
+      // failedLoginAttempts: 0,
     });
 
     await user.save();

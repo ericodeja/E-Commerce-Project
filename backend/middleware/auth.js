@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
+import { rolePermissionsMap } from "../utils/rolePermissions.js";
 
 function authenticate(req, res, next) {
   try {
@@ -28,18 +29,19 @@ function authenticate(req, res, next) {
 const authorizePermissions = (...requiredPermission) => {
   return async (req, res, next) => {
     try {
-      const user = await User.findOne({ _id: req.user._id }).select(
-        "+permissions",
-      );
+      const user = await User.findOne({ _id: req.user._id });
       if (!user) {
         const error = new Error("Authorization Error : User Not Found");
         error.status = 404;
         return next(error);
       }
 
+      const userRole = user.role;
+      const userPermissions = rolePermissionsMap[userRole];
+
       if (
         !requiredPermission.every((permission) => {
-          return user.permissions.includes(permission);
+          return userPermissions.includes(permission);
         })
       ) {
         const error = new Error("Authorization Error : Forbidden");

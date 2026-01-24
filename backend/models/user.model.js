@@ -15,11 +15,15 @@ const UserSchema = new mongoose.Schema(
     },
 
     passwordHash: { type: String, required: true, select: false },
-    isEmailVerified: Boolean,
+    isEmailVerified: { type: Boolean, default: false },
     role: { type: String, enum: ["user", "admin"] },
-    permissions: { type: [String], select: false },
+    // permissions: { type: [String], select: false },
     scopes: [String],
-    status: { type: String, enum: ["active", "suspended", "disabled"] },
+    status: {
+      type: String,
+      enum: ["active", "suspended", "disabled"],
+      default: "active",
+    },
 
     addresses: {
       type: [
@@ -59,14 +63,14 @@ const UserSchema = new mongoose.Schema(
     },
 
     preferences: {
-      receiveEmails: Boolean,
-      receiveSMS: Boolean,
-      language: String,
-      currency: String,
+      receiveEmails: { type: Boolean, default: true },
+      receiveSMS: { type: Boolean, default: true },
+      language: { type: String, default: "en" },
+      currency: { type: String, default: "NGN" },
     },
 
     lastLogin: { type: Date, select: false },
-    failedLoginAttempts: { type: Number, select: false },
+    // failedLoginAttempts: { type: Number, select: false },
     passwordResetToken: { type: String, select: false },
     passwordResetExpires: { type: Date, select: false },
   },

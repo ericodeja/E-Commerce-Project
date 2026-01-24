@@ -23,7 +23,6 @@ export const uploadToCloudinary = async (req, res, next) => {
       thumbnailFile.path,
       {
         folder: "products/thumbnails",
-        type: "image",
         fetch_format: "auto",
         quality: "auto",
       },
@@ -31,9 +30,8 @@ export const uploadToCloudinary = async (req, res, next) => {
 
     const imageResults = await Promise.all(
       imageFiles.map((file) => {
-        cloudinary.uploader.upload(file.path, {
+        return cloudinary.uploader.upload(file.path, {
           folder: "products/images",
-          type: "image",
           fetch_format: "auto",
           quality: "auto",
         });

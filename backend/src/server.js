@@ -1,4 +1,5 @@
-import {connectDB, closeDB} from "./db/mongo.js";
+import { connectDB } from "./db/mongoose.js";
+import mongoose from "mongoose";
 
 async function startServer(app, PORT) {
   try {
@@ -8,15 +9,18 @@ async function startServer(app, PORT) {
       console.log(`Server running on port ${PORT}`);
     });
 
+    process.on("SIGTERM", async () => {
+      console.log("SIGTERM received, shutting down gracefully");
+      server.close(async () => {
+        await mongoose.disconnect();
+        process.exit(0);
+      });
+    });
+
     process.on("SIGINT", async () => {
-      console.log("Shutting down...");
-      try {
-        await closeDB();
-      } catch (err) {
-        console.error("Error closing DB connection:", err);
-      }
-      server.close(() => {
-        console.log("Server closed");
+      console.log("SIGINT received, shutting down gracefully");
+      server.close(async () => {
+        await mongoose.disconnect();
         process.exit(0);
       });
     });
@@ -25,6 +29,5 @@ async function startServer(app, PORT) {
     process.exit(1);
   }
 }
-
 
 export default startServer;

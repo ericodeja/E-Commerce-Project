@@ -38,7 +38,7 @@ const ProductSchema = new mongoose.Schema(
         type: Number,
         required: true,
       },
-      isInStock: Number,
+      isInStock: Boolean,
       lowStockThreshold: Number,
     },
     media: {
