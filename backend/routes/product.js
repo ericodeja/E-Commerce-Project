@@ -1,7 +1,7 @@
 import express from "express";
 import multer from "multer";
 import { authenticate, authorizePermissions } from "../middleware/auth.js";
-import ProductControllers from "../controllers/productController.js";
+import productControllers from "../controllers/productController.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
 
 const upload = multer({ dest: "uploads/" });
@@ -17,19 +17,33 @@ router.post(
     { name: "images", maxCount: 5 },
   ]),
   uploadToCloudinary,
-  ProductControllers.createProduct,
+  productControllers.createProduct,
 );
 router.get(
-  "/products",
+  "/",
   authenticate,
   authorizePermissions("product:read"),
-  ProductControllers.getProduct,
+  productControllers.getProduct,
 );
 router.get(
   "/:id",
   authenticate,
   authorizePermissions("product:read"),
-  ProductControllers.getProduct,
+  productControllers.getProductById,
+);
+
+router.put(
+  "/:id",
+  authenticate,
+  authorizePermissions("product:update"),
+  productControllers.updateProduct,
+);
+
+router.delete(
+  "/:id",
+  authenticate,
+  authorizePermissions("product:delete"),
+  productControllers.deleteProduct,
 );
 
 export default router;

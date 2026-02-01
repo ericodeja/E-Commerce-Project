@@ -44,17 +44,14 @@ const createProduct = async (req, res, next) => {
   }
 };
 
-const getProduct = async (req, res, next) => {
+const getProductById = async (req, res, next) => {
   try {
     const id = req.params.id;
     if (id) {
       const product = await Product.findById(id);
 
       if (!product) {
-        const error = new Error({
-          success: false,
-          message: "Product not found",
-        });
+        const error = new Error('Error: Product not found');
         error.status = 404;
         return next(error);
       }
@@ -64,11 +61,37 @@ const getProduct = async (req, res, next) => {
         data: { product },
       });
     }
+  } catch (err) {
+    next(err);
+  }
+};
 
-    const products = await Product.find();
+const getProduct = async (req, res, next) => {
+  try {
+    const { limit, maxPrice, minPrice } = req.query;
+
+    const filters = {};
+    if (minPrice || maxPrice) {
+      filters.price = {};
+      if (minPrice) filters.price.$gte = Number(minPrice);
+      if (maxPrice) filters.price.$lte = Number(maxPrice);
+    }
+
+    const products = await Product.find({
+      "pricing.price": filters.price,
+    }).limit(Number(limit));
+
+    const total = await Product.countDocuments(filters);
+
     return res.status(200).json({
       success: true,
-      data: { products },
+      data: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / limit),
+        results: products,
+      },
     });
   } catch (err) {
     const error = new Error(`Error: ${err}`);
@@ -76,4 +99,62 @@ const getProduct = async (req, res, next) => {
   }
 };
 
-export default { createProduct, getProduct };
+const updateProduct = async (req, res, next) => {
+  try {
+    if (!req.params.id) {
+      const error = new Error("ProductId missing in request");
+      return next(error);
+    }
+    const {
+      name,
+      fullDescription,
+      shortDescription,
+      price,
+      salePrice,
+      quantity,
+    } = req.body;
+
+    await Product.findByIdAndUpdate(
+      { _id: req.params.id },
+      {
+        name,
+        "description.fullDescription": fullDescription,
+        "description.shortDescription": shortDescription,
+        "pricing.price": price,
+        "pricing.salePrice": salePrice,
+        "stock.quantity": quantity,
+      },
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Product successfully updated",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const deleteProduct = async (req, res, next) => {
+  try {
+    if (!req.params.id) {
+      const error = new Error("ProductId missing in request");
+      return next(error);
+    }
+    await Product.findByIdAndDelete({ _id: req.params.id });
+    return res.status(200).json({
+      success: true,
+      message: "Product successfully deleted",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export default {
+  createProduct,
+  getProductById,
+  getProduct,
+  updateProduct,
+  deleteProduct,
+};
