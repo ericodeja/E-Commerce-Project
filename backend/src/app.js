@@ -4,6 +4,7 @@ import "dotenv/config";
 import authRoutes from "../routes/auth.js";
 import userRoutes from "../routes/user.js";
 import productRoutes from '../routes/product.js'
+import cartRoutes from '../routes/cart.js'
 import errorHandler from "../middleware/error.js";
 import startServer from "./server.js";
 
@@ -18,6 +19,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/product", productRoutes);
+app.use("/api/cart", cartRoutes);
 
 //Error Handler
 app.use(errorHandler);

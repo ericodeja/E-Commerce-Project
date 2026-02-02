@@ -11,15 +11,15 @@ function authenticate(req, res, next) {
       return next(error);
     }
 
-    const refreshToken = authHeader.split(" ")[1];
+    const accessToken = authHeader.split(" ")[1];
 
-    if (!refreshToken) {
+    if (!accessToken) {
       const error = new Error("Access Denied");
       error.status = 401;
       return next(error);
     }
 
-    const decoded = jwt.verify(refreshToken, process.env.SECRET_KEY);
+    const decoded = jwt.verify(accessToken, process.env.SECRET_KEY);
     req.user = decoded;
     next();
   } catch (err) {

@@ -26,6 +26,8 @@ const rolePermissions = {
     "user:delete_self",
 
     "product:search",
+
+    "cart:add",
   ],
 };
 
