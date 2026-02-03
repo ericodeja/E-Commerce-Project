@@ -38,11 +38,11 @@ const cartSchema = new mongoose.Schema(
       type: { type: String, enum: ["percentage", "fixed"] },
     },
 
-    status: {
-      type: String,
-      enum: ["active", "abandoned", "converted", "expired"],
-      default: "active",
-    },
+    // status: {
+    //   type: String,
+    //   enum: ["active", "abandoned", "converted", "expired"],
+    //   default: "active",
+    // },
 
     expiresAt: Date,
   },
@@ -61,6 +61,7 @@ cartSchema.pre("save", function () {
   this.tax = this.subTotal * 0.075;
   this.total = this.subTotal + this.tax - this.subTotal * (this.discount || 0);
 });
+
 cartSchema.pre("updateOne", function () {
   const update = this.getUpdate();
 

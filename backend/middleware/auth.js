@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
 import { rolePermissionsMap } from "../utils/rolePermissions.js";
 
-function authenticate(req, res, next) {
+async function authenticate(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -20,6 +20,12 @@ function authenticate(req, res, next) {
     }
 
     const decoded = jwt.verify(accessToken, process.env.SECRET_KEY);
+    const userExists = await User.exists({ _id: decoded._id });
+    if (!userExists) {
+      const error = new Error("Invalid User");
+      error.status = 403;
+      return next(error);
+    }
     req.user = decoded;
     next();
   } catch (err) {

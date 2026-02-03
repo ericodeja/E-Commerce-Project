@@ -28,6 +28,10 @@ const rolePermissions = {
     "product:search",
 
     "cart:add",
+    "cart:read_one",
+    "cart:update_one",
+    "cart:delete_item",
+    "cart:delete",
   ],
 };
 
