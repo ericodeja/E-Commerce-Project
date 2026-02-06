@@ -51,7 +51,7 @@ const getProductById = async (req, res, next) => {
       const product = await Product.findById(id);
 
       if (!product) {
-        const error = new Error('Error: Product not found');
+        const error = new Error("Error: Product not found");
         error.status = 404;
         return next(error);
       }
@@ -69,28 +69,38 @@ const getProductById = async (req, res, next) => {
 const getProduct = async (req, res, next) => {
   try {
     const { limit, maxPrice, minPrice } = req.query;
+    const numLimit = Number(limit);
+    const numMaxPrice = Number(maxPrice);
+    const numMinPrice = Number(minPrice);
 
-    const filters = {};
-    if (minPrice || maxPrice) {
-      filters.price = {};
-      if (minPrice) filters.price.$gte = Number(minPrice);
-      if (maxPrice) filters.price.$lte = Number(maxPrice);
+    if (
+      Number.isNaN(numLimit) ||
+      Number.isNaN(numMaxPrice) ||
+      Number.isNaN(numMinPrice)
+    ) {
+      const error = new Error("Invalid query");
+      error.status = 400;
+      return next(error);
     }
+    const filters = {};
 
+    if (numMinPrice || numMaxPrice) {
+      filters.price = {};
+      if (numMinPrice) filters.price.$gte = numMinPrice;
+      if (numMaxPrice) filters.price.$lte = numMaxPrice;
+    }
     const products = await Product.find({
       "pricing.price": filters.price,
-    }).limit(Number(limit));
+    }).limit(numLimit);
 
     const total = await Product.countDocuments(filters);
 
     return res.status(200).json({
       success: true,
       data: {
-        page: Number(page),
-        limit: Number(limit),
-        total,
-        totalPages: Math.ceil(total / limit),
-        results: products,
+        limit: numLimit,
+        totalPages: Math.ceil(total / numLimit), //total pages not working
+        results: products, //product title isn't being displayed 
       },
     });
   } catch (err) {
