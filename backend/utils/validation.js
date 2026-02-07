@@ -19,7 +19,7 @@ async function createToken(user) {
       _id: user._id.toString(),
     },
     process.env.SECRET_KEY,
-    { expiresIn: "5m" }
+    { expiresIn: "5m" },
   );
   //Refresh Token
   const refreshToken = jwt.sign(
@@ -27,7 +27,7 @@ async function createToken(user) {
       _id: user._id.toString(),
     },
     process.env.SECRET_KEY,
-    { expiresIn: "7d" }
+    { expiresIn: "7d" },
   );
 
   const existingUser = await Token.findOne({ userId: user._id });
@@ -57,8 +57,11 @@ async function createResetToken(user) {
 
     const existingToken = await Token.findOneAndUpdate(
       { userId: user._id },
-      { passwordResetToken: hashedToken, passwordResetExpires: Date.now() + 15 * 60 * 1000 },
-      { new: true, upsert: true }
+      {
+        passwordResetToken: hashedToken,
+        passwordResetExpires: Date.now() + 15 * 60 * 1000,
+      },
+      { new: true, upsert: true },
     );
 
     await existingToken.save();

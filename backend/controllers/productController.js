@@ -69,38 +69,54 @@ const getProductById = async (req, res, next) => {
 const getProduct = async (req, res, next) => {
   try {
     const { limit, maxPrice, minPrice } = req.query;
-    const numLimit = Number(limit);
-    const numMaxPrice = Number(maxPrice);
-    const numMinPrice = Number(minPrice);
+    let numLimit;
+    let numMaxPrice;
+    let numMinPrice;
 
-    if (
-      Number.isNaN(numLimit) ||
-      Number.isNaN(numMaxPrice) ||
-      Number.isNaN(numMinPrice)
-    ) {
-      const error = new Error("Invalid query");
-      error.status = 400;
-      return next(error);
+    if (limit) numLimit = Number(limit);
+    if (maxPrice) numMaxPrice = Number(maxPrice);
+    if (minPrice) numMinPrice = Number(minPrice);
+
+    const filters = { pricing: { price: {} } };
+    if (numMaxPrice || numMinPrice) {
+      if (numMaxPrice) filters.pricing.price.$lte = numMaxPrice;
+      if (numMinPrice) filters.pricing.price.$gte = numMinPrice;
     }
-    const filters = {};
 
-    if (numMinPrice || numMaxPrice) {
-      filters.price = {};
-      if (numMinPrice) filters.price.$gte = numMinPrice;
-      if (numMaxPrice) filters.price.$lte = numMaxPrice;
+    let products;
+
+    if (numLimit) {
+      if (filters.pricing.price.length > 0) {
+        products = await Product.find({
+          "pricing.price": filters.pricing.price,
+        }).limit(numLimit);
+      } else {
+        products = await Product.find().limit(numLimit);
+      }
+    } else if (!numLimit) {
+      if (filters.pricing.price.length > 0) {
+        products = await Product.find({
+          "pricing.price": filters.pricing.price,
+        });
+      } else {
+        products = await Product.find();
+      }
     }
-    const products = await Product.find({
-      "pricing.price": filters.price,
-    }).limit(numLimit);
 
-    const total = await Product.countDocuments(filters);
+    let total;
+
+    if (Object.keys(filters.pricing.price).length > 0) {
+      total = await Product.countDocuments({
+        "pricing.price": filters.pricing.price,
+      });
+    }
 
     return res.status(200).json({
       success: true,
       data: {
         limit: numLimit,
-        totalPages: Math.ceil(total / numLimit), //total pages not working
-        results: products, //product title isn't being displayed 
+        totalPages: numLimit > 0 ? Math.ceil(total / numLimit) : 1,
+        results: products,
       },
     });
   } catch (err) {
