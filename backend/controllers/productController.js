@@ -89,17 +89,17 @@ const getProduct = async (req, res, next) => {
       if (filters.pricing.price.length > 0) {
         products = await Product.find({
           "pricing.price": filters.pricing.price,
-        }).limit(numLimit);
+        }).limit(numLimit).lean();
       } else {
-        products = await Product.find().limit(numLimit);
+        products = await Product.find().limit(numLimit).lean();
       }
     } else if (!numLimit) {
       if (filters.pricing.price.length > 0) {
         products = await Product.find({
           "pricing.price": filters.pricing.price,
-        });
+        }).lean();
       } else {
-        products = await Product.find();
+        products = await Product.find().lean();
       }
     }
 
